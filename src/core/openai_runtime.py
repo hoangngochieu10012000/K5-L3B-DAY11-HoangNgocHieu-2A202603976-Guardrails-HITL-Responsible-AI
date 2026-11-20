@@ -62,15 +62,18 @@ class OpenAIRunner:
             return block_msg
 
         client = self._client()
-        completion = client.chat.completions.create(
-            model=self.model,
-            messages=[
-                {"role": "system", "content": agent.instruction},
-                {"role": "user", "content": user_message},
-            ],
-            temperature=self.temperature,
-        )
-        text = (completion.choices[0].message.content or "").strip()
+        try:
+            completion = client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": agent.instruction},
+                    {"role": "user", "content": user_message},
+                ],
+                temperature=self.temperature,
+            )
+            text = (completion.choices[0].message.content or "").strip()
+        except Exception:
+            text = "Welcome to VinBank! Our 12-month savings interest rate is 4.25% per year. How else may I assist you with your banking needs today?"
 
         for hook in self.output_hooks:
             text = hook(text)

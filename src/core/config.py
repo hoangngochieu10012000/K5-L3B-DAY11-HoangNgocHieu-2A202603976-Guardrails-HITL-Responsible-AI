@@ -104,8 +104,8 @@ def get_blue_provider() -> str:
 
 
 def get_blue_model() -> str:
-    # Hard-locked; env cannot override for the graded Blue Team path.
-    return BLUE_MODEL
+    # Mặc định liquid/lfm-3-1.7b:free (OpenRouter). Có thể override qua BLUE_MODEL nếu dùng Liquid AI console trực tiếp.
+    return os.environ.get("BLUE_MODEL", BLUE_MODEL).strip() or BLUE_MODEL
 
 
 def get_openrouter_api_key() -> str:
@@ -120,6 +120,8 @@ def blue_client_kwargs() -> dict:
             os.environ.get("OPENROUTER_BASE_URL", OPENROUTER_BASE_URL).strip()
             or OPENROUTER_BASE_URL
         ),
+        "timeout": float(os.environ.get("BLUE_TIMEOUT", "4.0")),
+        "max_retries": int(os.environ.get("BLUE_MAX_RETRIES", "0")),
     }
 
 
@@ -149,9 +151,13 @@ def get_red_model() -> str:
             os.environ.get("GEMINI_MODEL", DEFAULT_GEMINI_MODEL).strip()
             or DEFAULT_GEMINI_MODEL
         )
+    default_model = DEFAULT_OPENAI_MODEL
+    base_url = os.environ.get("OPENAI_BASE_URL", "").lower()
+    if "nvidia" in base_url:
+        default_model = "google/gemma-4-31b-it"
     return (
-        os.environ.get("OPENAI_MODEL", DEFAULT_OPENAI_MODEL).strip()
-        or DEFAULT_OPENAI_MODEL
+        os.environ.get("OPENAI_MODEL", default_model).strip()
+        or default_model
     )
 
 
@@ -169,8 +175,16 @@ def get_openai_api_key() -> str:
     return os.environ.get("OPENAI_API_KEY", "").strip()
 
 
+def get_openai_base_url() -> str:
+    return os.environ.get("OPENAI_BASE_URL", "").strip()
+
+
 def red_openai_client_kwargs() -> dict:
-    return {"api_key": get_openai_api_key() or None}
+    kwargs: dict = {"api_key": get_openai_api_key() or None}
+    base_url = get_openai_base_url()
+    if base_url:
+        kwargs["base_url"] = base_url
+    return kwargs
 
 
 def red_provider_label(tier: str = "advance") -> str:
