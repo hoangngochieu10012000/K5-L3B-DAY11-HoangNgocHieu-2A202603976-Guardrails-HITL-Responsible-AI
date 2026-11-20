@@ -29,6 +29,10 @@ try:
 except ImportError:
     pass
 
+for _k in ("OPENAI_API_KEY", "OPENROUTER_API_KEY"):
+    if os.environ.get(_k, "").lower().startswith("bearer "):
+        os.environ[_k] = os.environ[_k][7:].strip()
+
 # --- Providers ---
 PROVIDER_OPENAI = "openai"
 PROVIDER_GEMINI = "gemini"
